@@ -1,0 +1,24 @@
+{
+    "name": "top.kuriko.Unity.VRChat.NDMF.AvatarParameterBinder.Editor",
+    "rootNamespace": "",
+    "references": [
+        "nadena.dev.ndmf",
+        "nadena.dev.modular-avatar.core",
+        "VRC.SDKBase",
+        "VRC.SDK3A",
+        "nadena.dev.ndmf.vrchat",
+        "top.kuriko.common",
+        "top.kuriko.Unity.VRChat.NDMF.AvatarParameterBinder.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
