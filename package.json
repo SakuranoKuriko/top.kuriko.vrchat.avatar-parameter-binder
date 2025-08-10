@@ -10,10 +10,11 @@
   "url" : "",
   "unity": "2022.3",
   "dependencies": {
+    "nadena.dev.modular-avatar": ">=1.9.10 <2.0.0-a",
     "top.kuriko.common": "0.1.0"
   },
   "vpmDependencies": {
     "nadena.dev.modular-avatar": ">=1.9.10 <2.0.0-a",
-    "top.kuriko.common": ">=0.1.0"
+    "top.kuriko.common": "0.1.0"
   }
 }

@@ -8,6 +8,7 @@
         "VRC.SDK3A",
         "nadena.dev.ndmf.vrchat",
         "top.kuriko.common",
+        "top.kuriko.common.Editor",
         "top.kuriko.Unity.VRChat.NDMF.AvatarParameterBinder.Runtime"
     ],
     "includePlatforms": [
