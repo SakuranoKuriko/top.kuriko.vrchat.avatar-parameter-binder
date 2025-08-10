@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using static VRC.SDKBase.VRC_AvatarParameterDriver;
+
 namespace top.kuriko.Unity.VRChat.NDMF.AvatarParameterBinder
 {
     [Serializable]

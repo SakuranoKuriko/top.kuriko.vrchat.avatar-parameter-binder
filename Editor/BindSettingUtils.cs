@@ -1,5 +1,4 @@
 using System;
-using System.Security.Cryptography;
 using UnityEngine;
 using static VRC.SDKBase.VRC_AvatarParameterDriver;
 using DriveParam = VRC.SDKBase.VRC_AvatarParameterDriver.Parameter;

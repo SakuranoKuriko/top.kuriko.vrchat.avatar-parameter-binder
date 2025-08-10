@@ -1,10 +1,6 @@
 using UnityEngine;
 using System;
 
-#if UNITY_EDITOR
-using UnityEditor.Animations;
-#endif
-
 namespace top.kuriko.Unity.VRChat.NDMF.AvatarParameterBinder
 {
     [Serializable]

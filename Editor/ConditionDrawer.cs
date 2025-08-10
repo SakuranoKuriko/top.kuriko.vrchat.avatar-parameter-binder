@@ -2,11 +2,9 @@ using UnityEngine;
 using UnityEditor;
 using System;
 using System.Linq;
-using System.Collections.Generic;
 using static top.kuriko.Unity.Common.Editor.EditorLayout;
 using top.kuriko.Unity.Common.Editor;
 using top.kuriko.Common;
-using static top.kuriko.Unity.VRChat.NDMF.AvatarParameterBinder.Editor.AvatarParameterBinderEditor;
 
 namespace top.kuriko.Unity.VRChat.NDMF.AvatarParameterBinder.Editor
 {

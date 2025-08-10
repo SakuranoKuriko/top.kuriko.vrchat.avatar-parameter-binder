@@ -1,14 +1,9 @@
 using System.Collections.Generic;
 using System;
 using System.Linq;
-using UnityEngine;
 using ParamType = UnityEngine.AnimatorControllerParameterType;
-using static VRC.SDKBase.Networking;
 using UnityEditor.Animations;
 using top.kuriko.Common;
-using A;
-using static top.kuriko.Unity.VRChat.NDMF.AvatarParameterBinder.Editor.AvatarParameterBinderEditor;
-using Codice.Client.BaseCommands;
 
 namespace top.kuriko.Unity.VRChat.NDMF.AvatarParameterBinder.Editor
 {

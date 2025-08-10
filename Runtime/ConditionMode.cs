@@ -1,4 +1,3 @@
-
 namespace top.kuriko.Unity.VRChat.NDMF.AvatarParameterBinder
 {
     public enum ConditionMode

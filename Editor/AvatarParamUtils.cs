@@ -1,11 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using top.kuriko.Common;
-using UnityEngine;
-using VRC.SDKBase;
 using ParamType = UnityEngine.AnimatorControllerParameterType;
 using DriveParam = VRC.SDKBase.VRC_AvatarParameterDriver.Parameter;
 using static VRC.SDKBase.VRC_AvatarParameterDriver;
