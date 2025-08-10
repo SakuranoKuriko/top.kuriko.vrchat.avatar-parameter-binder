@@ -37,6 +37,7 @@ namespace top.kuriko.Unity.VRChat.NDMF.AvatarParameterBinder.Editor
             public string Max = "最大";
             public string ConvertRange = "转换值范围";
 
+            public string PleaseAddBindSetting = "请添加绑定设置";
             public string ParameterValueInRangeTips = "In range（在范围中，包含上下界）";
             public string ParameterValueOutOfRangeTips = "Out of range（不在范围中，不包含上下界）";
             public string AllBindingConditionsMutuallyExclusive = "所有绑定条件互斥";

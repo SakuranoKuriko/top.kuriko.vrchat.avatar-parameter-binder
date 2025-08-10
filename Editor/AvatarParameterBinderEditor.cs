@@ -415,7 +415,11 @@ namespace top.kuriko.Unity.VRChat.NDMF.AvatarParameterBinder.Editor
                         {
                             MessageType tipType = MessageType.Info;
                             string tipMsg = i18n.AllBindingConditionsMutuallyExclusive;
-                            if (srcType != null)
+                            if (bss.count == 0)
+                            {
+                                tipMsg = i18n.PleaseAddBindSetting;
+                            }
+                            else if (srcType != null)
                             {
                                 var bcs = Enumerable.Range(0, bss.count)
                                     .Select(i =>
