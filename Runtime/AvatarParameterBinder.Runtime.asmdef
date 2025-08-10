@@ -1,5 +1,5 @@
 {
-    "name": "top.kuriko.Unity.VRChat.NDMF.AvatarParameterBinder.Runtime",
+    "name": "top.kuriko.VRChat.AvatarParameterBinder.Runtime",
     "rootNamespace": "",
     "references": [
         "VRC.SDKBase",

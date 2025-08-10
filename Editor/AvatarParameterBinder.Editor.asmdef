@@ -1,5 +1,5 @@
 {
-    "name": "top.kuriko.Unity.VRChat.NDMF.AvatarParameterBinder.Editor",
+    "name": "top.kuriko.VRChat.AvatarParameterBinder.Editor",
     "rootNamespace": "",
     "references": [
         "nadena.dev.ndmf",
@@ -7,9 +7,9 @@
         "VRC.SDKBase",
         "VRC.SDK3A",
         "nadena.dev.ndmf.vrchat",
-        "top.kuriko.common",
-        "top.kuriko.common.Editor",
-        "top.kuriko.Unity.VRChat.NDMF.AvatarParameterBinder.Runtime"
+        "top.kuriko.Common",
+        "top.kuriko.Common.Editor",
+        "top.kuriko.VRChat.AvatarParameterBinder.Runtime"
     ],
     "includePlatforms": [
         "Editor"
