@@ -519,6 +519,9 @@ namespace top.kuriko.Unity.VRChat.NDMF.AvatarParameterBinder.Editor
                     }
                 case BindMode.LocalToRemote:
                 case BindMode.RemoteToLocal:
+                    if (!measureOnly)
+                        EditorGUI.HelpBox(new(rect.x, rect.y, rect.width, LineHeight * 2 - LineSpacing), "未完成", MessageType.Error);
+                    rect.y += LineHeight * 2;
                     break;
             }
             return rect.y - inity;
