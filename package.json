@@ -5,9 +5,10 @@
   "description": "Avatar Parameter Binder",
   "author": {
     "name": "SakuranoKuriko",
+    "email": "mao.liz.baka@gmail.com",
     "url": "https://github.com/SakuranoKuriko"
   },
-  "url" : "",
+  "url" : "https://github.com/SakuranoKuriko/top.kuriko.vrchat.avatar-parameter-binder",
   "unity": "2022.3",
   "dependencies": {
     "nadena.dev.modular-avatar": ">=1.9.10 <2.0.0-a",
