@@ -5,6 +5,7 @@ using top.kuriko.Common;
 using ParamType = UnityEngine.AnimatorControllerParameterType;
 using DriveParam = VRC.SDKBase.VRC_AvatarParameterDriver.Parameter;
 using static VRC.SDKBase.VRC_AvatarParameterDriver;
+using nadena.dev.ndmf;
 
 namespace top.kuriko.Unity.VRChat.NDMF.AvatarParameterBinder
 {
@@ -12,6 +13,49 @@ namespace top.kuriko.Unity.VRChat.NDMF.AvatarParameterBinder
 
     public static class AvatarParamUtils
     {
+        public static readonly IReadOnlyDictionary<string, ProvidedParameter> BuiltInParams
+        = new Dictionary<string, ParamType>()
+        {
+            { "IsLocal", ParamType.Bool },
+            { "PreviewMode", ParamType.Int },
+            { "Viseme", ParamType.Int },
+            { "Voice", ParamType.Float },
+            { "GestureLeft", ParamType.Int },
+            { "GestureRight", ParamType.Int },
+            { "GestureLeftWeight", ParamType.Float },
+            { "GestureRightWeight", ParamType.Float },
+            { "AngularY", ParamType.Float },
+            { "VelocityX", ParamType.Float },
+            { "VelocityY", ParamType.Float },
+            { "VelocityZ", ParamType.Float },
+            { "VelocityMagnitude", ParamType.Float },
+            { "Upright", ParamType.Float },
+            { "Grounded", ParamType.Bool },
+            { "Seated", ParamType.Bool },
+            { "AFK", ParamType.Bool },
+            { "TrackingType", ParamType.Int },
+            { "VRMode", ParamType.Int },
+            { "MuteSelf", ParamType.Bool },
+            { "InStation", ParamType.Bool },
+            { "Earmuffs", ParamType.Bool },
+            { "IsOnFriendsList", ParamType.Bool },
+            { "AvatarVersion", ParamType.Int },
+            { "IsAnimatorEnabled", ParamType.Bool },
+        }.ToDictionary(kv => kv.Key, kv => new ProvidedParameter(
+            kv.Key,
+            ParameterNamespace.Animator,
+            null,
+            null,
+            kv.Value)
+        {
+            EffectiveName = kv.Key,
+            WantSynced = kv.Key switch
+            {
+                "IsLocal" or "PreviewMode" or "IsOnFriendsList" => false,
+                _ => true,
+            },
+        });
+
         public static DriveParam CreateDriveParamSet(string paramName, bool val)
         => new()
         {
@@ -94,6 +138,7 @@ namespace top.kuriko.Unity.VRChat.NDMF.AvatarParameterBinder
             type = ChangeType.Copy,
             source = srcParam,
             name = dstParam,
+            convertRange = false,
         };
         public static DriveParam CreateDriveParamCopy(string srcParam, string dstParam, float srcMin, float srcMax, float dstMin, float dstMax)
         => new()

@@ -33,8 +33,7 @@ namespace top.kuriko.Unity.VRChat.NDMF.AvatarParameterBinder.Editor
         => Update(prop.serializedObject, forceUpdate);
 
         public static ProvidedParameter Get(string name)
-        => Cache.TryGetValue(name, out var p) ? p : null;
-
-        public static Func<string, ProvidedParameter> GetFunc { get; set; } = Get;
+        => AvatarParamUtils.BuiltInParams.TryGetValue(name, out var bp)
+            ? bp : Cache.TryGetValue(name, out var p) ? p : null;
     }
 }

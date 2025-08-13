@@ -13,8 +13,10 @@ namespace top.kuriko.Unity.VRChat.NDMF.AvatarParameterBinder
         [SerializeField]
         public string Src;
         [SerializeField]
+        public BindSetting SyncSetting;
+        [SerializeField]
         public string Dst;
         [SerializeField]
-        public BindSetting[] BindSettings;
+        public BindSetting ReverseSyncSetting;
     }
 }

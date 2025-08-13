@@ -10,7 +10,7 @@ namespace top.kuriko.Unity.VRChat.NDMF.AvatarParameterBinder
 {
     public static class AvatarParamDriverUtils
     {
-        public static void AddDriver(this AnimatorState state, bool localOnly, params VRC_AvatarParameterDriver.Parameter[] parameters)
+        public static void AddDriver(this AnimatorState state, bool localOnly, IEnumerable<VRC_AvatarParameterDriver.Parameter> parameters)
         {
             var driver = ScriptableObject.CreateInstance<VRCAvatarParameterDriver>();
             driver.parameters = parameters.ToList();
@@ -20,8 +20,14 @@ namespace top.kuriko.Unity.VRChat.NDMF.AvatarParameterBinder
                 .ToArray();
         }
 
-        public static void AddDriver(this AnimatorState state, bool localOnly, IEnumerable<VRC_AvatarParameterDriver.Parameter> parameters)
-        => AddDriver(state, localOnly, parameters.ToArray());
+        public static void AddDriver(this AnimatorState state, bool localOnly, params VRC_AvatarParameterDriver.Parameter[] parameters)
+        => AddDriver(state, localOnly, parameters.AsEnumerable());
+        
+        public static void AddDriver(this AnimatorState state, IEnumerable<VRC_AvatarParameterDriver.Parameter> parameters)
+        => AddDriver(state, false, parameters);
+
+        public static void AddDriver(this AnimatorState state, params VRC_AvatarParameterDriver.Parameter[] parameters)
+        => AddDriver(state, false, parameters.AsEnumerable());
 
         public static void AddIsLocalInitDriver(this AnimatorState state, string paramName)
         => AddDriver(state, true, AvatarParamUtils.CreateDriveParamSet(paramName, 1f));

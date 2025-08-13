@@ -21,7 +21,7 @@ namespace top.kuriko.Unity.VRChat.NDMF.AvatarParameterBinder.Editor
 {
     public class AvatarParameterBinderPlugin : Plugin<AvatarParameterBinderPlugin>
     {
-        public override string QualifiedName => "top.kuriko.unity.vrchat.ndmf.avatar_parameter_binder";
+        public override string QualifiedName => "top.kuriko.vrchat.avatar_parameter_binder";
 
         public override string DisplayName => "Avatar Parameter Binder Plugin";
 
@@ -35,6 +35,7 @@ namespace top.kuriko.Unity.VRChat.NDMF.AvatarParameterBinder.Editor
                     var parameters = ParameterInfo.ForContext(ctx)
                         .GetParametersForObject(ctx.AvatarRootObject)
                         .SelectMany(p => p.SubParameters())
+                        .Concat(AvatarParamUtils.BuiltInParams.Values)
                         .DistinctBy(p => p.EffectiveName)
                         .ToDictionary(p => p.EffectiveName, p => (Param: p, Type: p.ParameterType ?? ParamType.Float));
                     var binders = ctx.AvatarRootObject
@@ -42,13 +43,13 @@ namespace top.kuriko.Unity.VRChat.NDMF.AvatarParameterBinder.Editor
                         .ToList();
                     if (binders.Count == 0)
                         return;
-                    var bindSettings = binders
+                    var binderSettings = binders
                         .SelectMany(d => d.Settings)
                         .ToList();
-                    var paramNames = bindSettings
+                    var paramNames = binderSettings
                         .SelectMany(d => d.Conditions.Select(c => c.ParameterName))
-                        .Concat(bindSettings.Select(d => d.Src))
-                        .Concat(bindSettings.Select(d => d.Dst))
+                        .Concat(binderSettings.Select(d => d.Src))
+                        .Concat(binderSettings.Select(d => d.Dst))
                         .Distinct()
                         .ToHashSet();
                     var invParaNames = paramNames
@@ -57,19 +58,20 @@ namespace top.kuriko.Unity.VRChat.NDMF.AvatarParameterBinder.Editor
                     if (invParaNames.Any())
                         throw new InvalidOperationException($"Parameters not found:\r\n{string.Join("\r\n", invParaNames)}");
                     parameters = parameters.Where(p => paramNames.Contains(p.Key)).ToDictionary(p => p.Key, p => p.Value);
-                    ParamType GetParamType(string name) => parameters[name].Type;
+                    ParamType? getParamType(string name) => parameters[name].Type;
 
                     var animator = AnimationUtils.CreateAnimator();
                     // 添加用到的参数
+                    animator.AddParameter(new() { name = IsLocalParamName, type = ParamType.Bool });
                     foreach (var (name, (_, type)) in parameters)
                         animator.AddParameter(new()
                         {
                             name = name,
                             type = type,
                         });
-                    for (var i = 0; i < bindSettings.Count; i++)
+                    for (var i = 0; i < binderSettings.Count; i++)
                     {
-                        var set = bindSettings[i];
+                        var set = binderSettings[i];
                         switch (set.BindMode)
                         {
                             case BindMode.LocalAndRemote:
@@ -82,134 +84,163 @@ namespace top.kuriko.Unity.VRChat.NDMF.AvatarParameterBinder.Editor
                                 continue;
                         }
                         var layer = animator.AddLastLayer("Avatar Parameter Binder #" + (i + 1));
-                        var idle = layer.AddState("idle");
-                        var src = parameters[set.Src];
-                        var dst = parameters[set.Dst];
-                        var bss = set.BindSettings
-                            .Reverse()
-                            .Distinct((x, y) => x.Mode == y.Mode && x.Threshold.ApproximateEquals(y.Threshold))
-                            .Select(bs =>
+                        var init = layer.AddState("Init");
+                        layer.SetStatePosition(init, new(0, 200));
+                        int directionIndex = 0;
+                        void addSingleDirection(
+                            string src,
+                            string dst,
+                            bool onLocal,
+                            bool onRemote,
+                            BindSetting syncset
+                            )
+                        {
+                            var srcParam = parameters[src];
+                            var dstParam = parameters[dst];
+                            var idle = layer.AddState(onLocal ? (onRemote ? "Idle" : "Idle (Local)") : "Idle (Remote)");
+                            layer.SetStatePosition(idle, new(300, directionIndex * 200));
+                            directionIndex++;
+                            if (onLocal && onRemote)
+                                init.AddTransitionTo(idle);
+                            else init.AddTransitionTo(idle, new Condition(IsLocalParamName, onLocal).ToAnimatorCondition().Value);
+                            var cs = set.Conditions.AsEnumerable();
+                            var acc = syncset.Accuracy.LimitToRange(2, srcParam.Type.GetMaxSyncAccuracy());
+                            List<AnimatorState> states = null;
+                            var driver = syncset.ToDriveParam(src, dst);
+                            void proc(int index, params Condition[] conditions)
                             {
-                                var nbs = new BindSetting(bs)
+                                var state = states[index];
+                                state.AddDriver(driver);
+                                layer.SetStatePosition(state, new(300 + directionIndex * 300, index * 100));
+                                foreach (var c in cs.Concat(conditions).ToAnimatorConditions(getParamType))
                                 {
-                                    RandomMin = Mathf.Min(bs.RandomMin, 1),
-                                    RandomMax = Mathf.Max(bs.RandomMax, 0),
-                                };
-                                if (dst.Type != ParamType.Int)
-                                {
-                                    nbs.SrcMin = Mathf.Min(bs.SrcMin, 1);
-                                    nbs.SrcMax = Mathf.Max(bs.SrcMax, 0);
-                                    nbs.DstMin = Mathf.Min(bs.DstMin, 1);
-                                    nbs.DstMax = Mathf.Max(bs.DstMax, 0);
+                                    idle.AddTransitionTo(state, c);
+                                    for (var i = 0; i < states.Count; i++)
+                                        if (index != i)
+                                            states[i].AddTransitionTo(state, c);
                                 }
-                                return nbs;
-                            })
-                            .Reverse()
-                            .ToList();
+                            }
+                            switch (srcParam.Type)
+                            {
+                                case ParamType.Bool:
+                                case ParamType.Trigger:
+                                    states = new()
+                                    {
+                                        layer.AddState($"{src} = False"),
+                                        layer.AddState($"{src} = True"),
+                                    };
+                                    proc(0, new Condition(src, false));
+                                    proc(1, new Condition(src, true));
+                                    break;
+                                case ParamType.Int:
+                                    {
+                                        switch (acc)
+                                        {
+                                            case 2:
+                                            case 4:
+                                            case 8:
+                                            case 16:
+                                            case 32:
+                                            case 64:
+                                            case 128:
+                                                {
+                                                    var step = 256 / acc;
+                                                    states = Enumerable.Range(0, acc)
+                                                        .Select(i => layer.AddState($"{src} in [{step * i}, {step * (i + 1) - 1}]"))
+                                                        .ToList();
+                                                    for (int i = 0; i < acc; i++)
+                                                        proc(i, new Condition(src, ConditionMode.InRange, step * i, step * (i + 1) - 1));
+                                                    break;
+                                                }
+                                            case 256:
+                                                states = Enumerable.Range(0, acc)
+                                                    .Select(i => layer.AddState($"{src} = {i}"))
+                                                    .ToList();
+                                                for (var i = 0; i < acc; i++)
+                                                    proc(i, new Condition(src, ConditionMode.Equals, i));
+                                                break;
+                                            default:
+                                                {
+                                                    var step = 256f / acc;
+                                                    var ids = Enumerable.Range(0, acc)
+                                                        .Select(i => (int)MathF.Round(i * step))
+                                                        .ToList();
+                                                    var ranges = new List<(int l, int r)>();
+                                                    for (var i = 1; i < ids.Count; i++)
+                                                        ranges.Add((ids[i-1], ids[i]));
+                                                    states = ranges
+                                                        .Select(r => layer.AddState((r.l + 1 == r.r) ? $"{src} = {r.l}" : $"{src} in [{r.l}, {r.r}]"))
+                                                        .ToList();
+                                                    for (var i = 0; i < ranges.Count; i++)
+                                                        proc(i, ranges
+                                                            .Select(r => (r.l+1 == r.r)
+                                                                ? new Condition(src, ConditionMode.Equals, r.l)
+                                                                : new Condition(src, ConditionMode.InRange, r.l, r.r - 1))
+                                                            .ToArray()
+                                                        );
+                                                    break;
+                                                }
+                                        }
+                                        break;
+                                    }
+                                case ParamType.Float:
+                                    {
+                                        var step = 2f / acc;
+                                        states = Enumerable.Range(0, acc)
+                                            .Select(i => layer.AddState($"{src} in ({step * i}, {step * (i + 1)})"))
+                                            .ToList();
+                                        for (var i = 0; i < acc; i++)
+                                            proc(i, new Condition(src, ConditionMode.Greater, step * i), new Condition(src, ConditionMode.Less, step * (i + 1)));
+                                    }
+                                    break;
+                            }
+                        }
                         switch (set.BindMode)
                         {
                             case BindMode.LocalAndRemote:
+                                addSingleDirection(set.Src, set.Dst, true, true, set.SyncSetting);
+                                break;
                             case BindMode.LocalOnly:
                             case BindMode.RemoteOnly:
                                 {
-                                    var localOnly = set.BindMode == BindMode.LocalOnly;
-                                    var cs = set.Conditions.AsEnumerable();
-                                    if (set.BindMode != BindMode.LocalAndRemote)
-                                        cs = cs.Append(new(IsLocalParamName, localOnly));
-                                    var (noreturn, overlapping) = bss.Select(x => (x.Mode, x.Threshold, x.Threshold2)).GetRangeInfo(src.Type);
-                                    if (overlapping)
-                                        throw new ArgumentException($"bind setting: value range overlapping\r\nsrc: {src.Param}, type: {src.Type}");
-                                    var states = new List<AnimatorState>();
-                                    for (var j = 0; j < bss.Count; j++)
-                                        states.Add(layer.AddState("#" + j));
-                                    for (var j = 0; j < bss.Count; j++)
-                                    {
-                                        var state = states[j];
-                                        var bs = bss[j];
-                                        layer.SetStatePosition(state, new(450, j * 200));
-                                        var bsc = bs.GetCondition(set);
-                                        var cs2 = cs.Append(bsc);
-                                        foreach (var acs in cs2.ToAnimatorConditions(GetParamType))
-                                        {
-                                            idle.AddTransitionTo(state, acs);
-                                            for (var k = 0; k < bss.Count; k++)
-                                                if (j != k)
-                                                    states[k].AddTransitionTo(state, acs);
-                                            if (!noreturn)
-                                                foreach (var c in cs2.Select(c => c.Invert()).ToAnimatorConditions(GetParamType))
-                                                    state.AddTransitionTo(idle, c);
-                                        }
-                                        state.AddDriver(localOnly, bs.ToDriveParam(set));
-                                    }
-                                    layer.SetStatePosition(idle, new(0, 200));
+                                    var m = set.BindMode == BindMode.LocalOnly;
+                                    addSingleDirection(set.Src, set.Dst, m, !m, set.SyncSetting);
                                     break;
                                 }
                             case BindMode.LocalToRemote:
                             case BindMode.RemoteToLocal:
                                 {
-                                    //var linit = layer.AddState("init (local)");
-                                    //var rinit = layer.AddState("init (remote)");
-                                    //init.AddTransitionTo(linit, new Condition(IsLocalParamName, true));
-                                    //init.AddTransitionTo(rinit, new Condition(IsLocalParamName, false));
-                                    //var lmet = layer.AddState("condition met (local)");
-                                    //var rmet = layer.AddState("condition met (remote)");
-                                    //var lnmet = layer.AddState("condition not met (local)");
-                                    //var rnmet = layer.AddState("condition not met (remote)");
-                                    //var toRemote = set.BindMode == BindMode.LocalToRemote;
-                                    //if (toRemote)
-                                    //{
-                                    //    AddSingleDirectionSync(
-                                    //        linit,
-                                    //        lmet,
-                                    //        lnmet,
-                                    //        BindMode.LocalOnly,
-                                    //        set.Conditions,
-                                    //        set.Src,
-                                    //        set.Dst,
-                                    //        set.SyncTarget1,
-                                    //        set.UseSyncTarget2 ? set.SyncTarget2 : null
-                                    //        );
-                                    //    AddSingleDirectionSync(
-                                    //        rinit,
-                                    //        rmet,
-                                    //        rnmet,
-                                    //        BindMode.RemoteOnly,
-                                    //        set.Conditions,
-                                    //        set.Dst,
-                                    //        set.Src,
-                                    //        set.ReverseSyncTarget1,
-                                    //        set.UseReverseSyncTarget2 ? set.ReverseSyncTarget2 : null
-                                    //        );
-                                    //}
-                                    //else
-                                    //{
-                                    //    AddSingleDirectionSync(
-                                    //        rinit,
-                                    //        rmet,
-                                    //        rnmet,
-                                    //        BindMode.RemoteOnly,
-                                    //        set.Conditions,
-                                    //        set.Src,
-                                    //        set.Dst,
-                                    //        set.SyncTarget1,
-                                    //        set.UseSyncTarget2 ? set.SyncTarget2 : null
-                                    //        );
-                                    //    AddSingleDirectionSync(
-                                    //        linit,
-                                    //        lmet,
-                                    //        lnmet,
-                                    //        BindMode.LocalOnly,
-                                    //        set.Conditions,
-                                    //        set.Dst,
-                                    //        set.Src,
-                                    //        set.ReverseSyncTarget1,
-                                    //        set.UseReverseSyncTarget2 ? set.ReverseSyncTarget2 : null
-                                    //        );
-                                    //}
+                                    var m = set.BindMode == BindMode.LocalToRemote;
+                                    addSingleDirection(set.Src, set.Dst, m, !m, set.SyncSetting);
+                                    addSingleDirection(set.Dst, set.Src, !m, m, set.ReverseSyncSetting);
                                     break;
                                 }
                         }
                     }
+                    //                var states = new List<AnimatorState>();
+                    //                for (var j = 0; j < bss.Count; j++)
+                    //                    states.Add(layer.AddState("#" + j));
+                    //                for (var j = 0; j < bss.Count; j++)
+                    //                {
+                    //                    var state = states[j];
+                    //                    var bs = bss[j];
+                    //                    layer.SetStatePosition(state, new(450, j * 200));
+                    //                    var bsc = bs.GetCondition(set);
+                    //                    var cs2 = cs.Append(bsc);
+                    //                    foreach (var acs in cs2.ToAnimatorConditions(GetParamType))
+                    //                    {
+                    //                        idle.AddTransitionTo(state, acs);
+                    //                        for (var k = 0; k < bss.Count; k++)
+                    //                            if (j != k)
+                    //                                states[k].AddTransitionTo(state, acs);
+                    //                        if (!noreturn)
+                    //                            foreach (var c in cs2.Select(c => c.Invert()).ToAnimatorConditions(GetParamType))
+                    //                                state.AddTransitionTo(idle, c);
+                    //                    }
+                    //                    state.AddDriver(localOnly, bs.ToDriveParam(set));
+                    //                }
+                    //                layer.SetStatePosition(idle, new(0, 200));
+
                     var merger = ctx.AvatarRootObject.AddComponent<ModularAvatarMergeAnimator>();
                     merger.animator = animator;
                     merger.layerType = VRCAvatarDescriptor.AnimLayerType.FX;

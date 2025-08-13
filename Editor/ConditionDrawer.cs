@@ -16,7 +16,7 @@ namespace top.kuriko.Unity.VRChat.NDMF.AvatarParameterBinder.Editor
             var param = el.FindProperty<string>(nameof(Condition.ParameterName));
             var mode = el.FindProperty<ConditionMode>(nameof(Condition.Mode));
             var val = el.FindProperty<float>(nameof(Condition.Threshold));
-            var type = AvatarParamCache.GetFunc(param.Value)?.ParameterType;
+            var type = AvatarParamCache.Get(param.Value)?.ParameterType;
             var xoff = 0f;
             {
                 var sz = label.CalcSize(EditorStyles.label);

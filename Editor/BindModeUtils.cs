@@ -11,5 +11,7 @@ namespace top.kuriko.Unity.VRChat.NDMF.AvatarParameterBinder.Editor
         = Modes.Select((v, i) => (v, i)).ToDictionary(v => v.v, v => v.i);
 
         public static int GetIndex(this BindMode mode) => ModeIndexes[mode];
+
+        public static bool IsBiDirection(this BindMode mode) => mode == BindMode.LocalToRemote || mode == BindMode.RemoteToLocal;
     }
 }
