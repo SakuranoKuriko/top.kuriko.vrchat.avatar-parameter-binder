@@ -87,7 +87,6 @@ namespace top.kuriko.Unity.VRChat.NDMF.AvatarParameterBinder.Editor
                         var init = layer.AddState("Init");
                         layer.SetStatePosition(init, new(0, 200));
                         var directionIndex = 0;
-                        var stateIndex = 0;
                         void addSingleDirection(
                             string src,
                             string dst,
@@ -98,8 +97,9 @@ namespace top.kuriko.Unity.VRChat.NDMF.AvatarParameterBinder.Editor
                         {
                             var srcParam = parameters[src];
                             var dstParam = parameters[dst];
-                            var idle = layer.AddState(onLocal ? (onRemote ? "Idle" : "Idle (Local)") : "Idle (Remote)");
-                            layer.SetStatePosition(idle, new(300, directionIndex * 200));
+                            var idle = onLocal && onRemote ? init : layer.AddState(onLocal ? "Local" : "Remote");
+                            if (idle != init)
+                                layer.SetStatePosition(idle, new(300, directionIndex * 200));
                             directionIndex++;
                             if (onLocal && onRemote)
                                 init.AddTransitionTo(idle);
@@ -112,8 +112,7 @@ namespace top.kuriko.Unity.VRChat.NDMF.AvatarParameterBinder.Editor
                             {
                                 var state = states[index];
                                 state.AddDriver(driver);
-                                layer.SetStatePosition(state, new(600, stateIndex * 100));
-                                stateIndex++;
+                                layer.SetStatePosition(state, new(300 + directionIndex * 300, index * 100));
                                 foreach (var c in cs.Concat(conditions).ToAnimatorConditions(getParamType))
                                 {
                                     idle.AddTransitionTo(state, c);
@@ -189,10 +188,10 @@ namespace top.kuriko.Unity.VRChat.NDMF.AvatarParameterBinder.Editor
                                     {
                                         var step = 2f / acc;
                                         states = Enumerable.Range(0, acc)
-                                            .Select(i => layer.AddState($"{src} in ({step * i}, {step * (i + 1)})"))
+                                            .Select(i => layer.AddState($"{src} in [{step * i - 1}, {step * (i + 1) - 1})"))
                                             .ToList();
                                         for (var i = 0; i < acc; i++)
-                                            proc(i, new Condition(src, ConditionMode.Greater, step * i), new Condition(src, ConditionMode.Less, step * (i + 1)));
+                                            proc(i, new Condition(src, ConditionMode.Greater, step * i - 1), new Condition(src, ConditionMode.Less, step * (i + 1) - 1));
                                     }
                                     break;
                             }
