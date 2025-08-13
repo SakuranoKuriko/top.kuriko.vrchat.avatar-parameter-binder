@@ -86,7 +86,8 @@ namespace top.kuriko.Unity.VRChat.NDMF.AvatarParameterBinder.Editor
                         var layer = animator.AddLastLayer("Avatar Parameter Binder #" + (i + 1));
                         var init = layer.AddState("Init");
                         layer.SetStatePosition(init, new(0, 200));
-                        int directionIndex = 0;
+                        var directionIndex = 0;
+                        var stateIndex = 0;
                         void addSingleDirection(
                             string src,
                             string dst,
@@ -111,7 +112,8 @@ namespace top.kuriko.Unity.VRChat.NDMF.AvatarParameterBinder.Editor
                             {
                                 var state = states[index];
                                 state.AddDriver(driver);
-                                layer.SetStatePosition(state, new(300 + directionIndex * 300, index * 100));
+                                layer.SetStatePosition(state, new(600, stateIndex * 100));
+                                stateIndex++;
                                 foreach (var c in cs.Concat(conditions).ToAnimatorConditions(getParamType))
                                 {
                                     idle.AddTransitionTo(state, c);
