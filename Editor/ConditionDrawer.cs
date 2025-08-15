@@ -56,22 +56,7 @@ namespace top.kuriko.Unity.VRChat.NDMF.AvatarParameterBinder.Editor
             if (type != null)
             {
                 var modes = type.Value.GetConditions();
-                if (!modes.Contains(modev))
-                {
-                    switch (type)
-                    {
-                        case AnimatorControllerParameterType.Bool:
-                        case AnimatorControllerParameterType.Trigger:
-                            modev = ConditionMode.If;
-                            break;
-                        case AnimatorControllerParameterType.Int:
-                            modev = ConditionMode.Equals;
-                            break;
-                        case AnimatorControllerParameterType.Float:
-                            modev = ConditionMode.Greater;
-                            break;
-                    }
-                }
+                modev = modev.ValidOrDefault(type.Value);
                 if (type == AnimatorControllerParameterType.Bool)
                 {
                     var (changed, value) = EditorUtils.GUIChangeCheckField(

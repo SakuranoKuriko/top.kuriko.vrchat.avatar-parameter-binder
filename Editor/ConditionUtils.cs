@@ -135,7 +135,7 @@ namespace top.kuriko.Unity.VRChat.NDMF.AvatarParameterBinder.Editor
 
         public static (IReadOnlyList<AnimatorCondition> Conditions, bool and) ToAnimatorConditions(this Condition c, ParamType type)
         {
-            var (mode, val, val2) = (c.Mode, c.Threshold, c.Threshold2);
+            var (mode, val, val2) = (c.Mode.ValidOrDefault(type), c.Threshold, c.Threshold2);
             var lst = new List<AnimatorCondition>();
             void add(ConditionMode mode, float v) => lst.Add(new()
             {
