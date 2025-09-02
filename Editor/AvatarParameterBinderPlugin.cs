@@ -30,6 +30,7 @@ namespace top.kuriko.Unity.VRChat.NDMF.AvatarParameterBinder.Editor
         protected override void Configure()
             => InPhase(BuildPhase.Generating)
                 .BeforePlugin("nadena.dev.modular-avatar")
+                .BeforePlugin("com.anatawa12.avatar-optimizer")
                 .Run("Avatar Parameter Binder", ctx =>
                 {
                     var parameters = ParameterInfo.ForContext(ctx)
